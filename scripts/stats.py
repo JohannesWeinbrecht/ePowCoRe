@@ -1,5 +1,7 @@
 import json
 import pathlib
+import networkx as nx
+from matplotlib import pyplot as plt
 
 from epowcore.gdf.bus import Bus
 from epowcore.gdf.core_model import CoreModel
@@ -8,6 +10,7 @@ from epowcore.gdf.generators.static_generator import StaticGenerator
 from epowcore.gdf.generators.synchronous_machine import SynchronousMachine
 from epowcore.gdf.governors.governor import Governor
 from epowcore.gdf.load import Load
+from epowcore.generic.tools.visualization import visualize_graph
 from epowcore.gdf.power_system_stabilizers.power_system_stabilizer import PowerSystemStabilizer
 from epowcore.gdf.pv_system import PVSystem
 from epowcore.gdf.shunt import Shunt
@@ -21,12 +24,19 @@ PATH = pathlib.Path(__file__).parent.resolve()
 
 
 def main():
-    model_path = PATH.parent / "output/gdf/IEEE39.json"
-    with open(model_path, "r", encoding="utf-8") as file:
+    with open("steigwegOberderdingenTest1_gdf.json", "r", encoding="utf-8") as file:
         data_str = file.read()
     data = json.loads(data_str)
     model = CoreModel.import_dict(data)
 
+    nx_graph = model.graph.get_internal_graph()
+    nx.draw_networkx(nx_graph, with_labels=False, node_size=100)
+    plt.show()
+    # print("Connected Components")
+    # print(list(nx.connected_components(nx_graph)))
+    print(f"Amount of connected components: {len(list(nx.connected_components(nx_graph)))}")
+
+    print("=====")
     print("Graph")
     print("=====")
     print(f"Nodes:        {len(model.graph.nodes)}")
