@@ -1,3 +1,5 @@
+from epowcore.gdf.external_grid import ExternalGrid
+from epowcore.gdf.switch import Switch
 import pandapower
 
 from epowcore.gdf.bus import Bus
@@ -12,7 +14,7 @@ from epowcore.pandapower.pandapower_model import PandapowerModel
 
 
 def export_pandapower(core_model: CoreModel) -> PandapowerModel:
-    """Pandapower export function, taking in the gdf CoreModel and 
+    """Pandapower export function, taking in the gdf CoreModel and
     returning a PandapowerModel object.
 
     :param core_model: GDF core model to be converted to a PandapowerModel.
@@ -41,6 +43,8 @@ def export_pandapower(core_model: CoreModel) -> PandapowerModel:
         pandapower_network.create_bus_from_gdf(bus=gdf_bus)
         counter += 1
     Logger.log_to_selected(f"created {counter} out of {number_of_buses}")
+
+    Logger.log_to_selected(str(pandapower_network))
 
     Logger.log_to_selected("Creating loads in the Pandapower network")
     counter = 0
@@ -75,6 +79,17 @@ def export_pandapower(core_model: CoreModel) -> PandapowerModel:
             counter += 1
     Logger.log_to_selected(f"created {counter} out of {number_of_synchronous_machines}")
 
+    Logger.log_to_selected("Creating external grid from external grid in the coremodel network")
+    counter = 0
+    gdf_external_grid_list = core_model.type_list(ExternalGrid)
+    number_of_external_grid = len(gdf_external_grid_list)
+    for gdf_external_grid in gdf_external_grid_list:
+        if pandapower_network.create_external_grid_from_gdf_external_grid(
+            core_model=core_model, external_grid=gdf_external_grid
+        ):
+            counter += 1
+    Logger.log_to_selected(f"Created {counter} out of {number_of_external_grid}")
+
     Logger.log_to_selected("Creating lines from transmission lines in the pandapower network")
     counter = 0
     gdf_tline_list = core_model.type_list(TLine)
@@ -83,5 +98,16 @@ def export_pandapower(core_model: CoreModel) -> PandapowerModel:
         if pandapower_network.create_line_from_gdf_tline(core_model=core_model, tline=gdf_tline):
             counter += 1
     Logger.log_to_selected(f"Created {counter} out of {number_of_tlines}")
+
+    Logger.log_to_selected("Creating switches from switches in the coremodel network")
+    counter = 0
+    gdf_switch_list = core_model.type_list(Switch)
+    number_of_switches = len(gdf_switch_list)
+    for gdf_switch in gdf_switch_list:
+        if pandapower_network.create_switch_from_gdf_switch(
+            core_model=core_model, switch=gdf_switch
+        ):
+            counter += 1
+    Logger.log_to_selected(f"Created {counter} out of {number_of_switches}")
 
     return pandapower_network
