@@ -2,6 +2,10 @@
 the converted pandapower network.
 """
 
+from epowcore.gdf.external_grid import ExternalGrid
+
+from exceptiongroup import catch
+
 from dataclasses import dataclass
 import math
 import numpy as np
@@ -30,6 +34,17 @@ class PandapowerModel:
     equivalent component in the pandapower network.
     """
 
+    @staticmethod
+    def transform_coords(coords):
+
+        if type(coords) is list:
+            result = []
+            for coord in coords:
+                result.append((coord[1], coord[0]))
+            return result
+        else:
+            return (coords[1], coords[0])
+
     network: pandapower.pandapowerNet
 
     def create_bus_from_gdf(self, bus: Bus):
@@ -48,8 +63,8 @@ class PandapowerModel:
             net=self.network,
             name=bus.name,
             index=bus.uid,
-            geodata=bus.coords,
-            coords=bus.coords,
+            geodata=PandapowerModel.transform_coords(bus.coords),
+            coords=None,  # bus.coords,
             vn_kv=bus.nominal_voltage,
             type=pandapower_type,
             zone=None,
@@ -79,25 +94,28 @@ class PandapowerModel:
             Logger.log_to_selected("Their was no bus found connected to the load")
             return False
         # Create the pandapower load in the network
-        pandapower.create_load(
-            net=self.network,
-            name=load.name,
-            index=load.uid,
-            bus=load_bus.uid,
-            p_mw=load.active_power,
-            q_mvar=load.reactive_power,
-            const_z_percent=load.get_default(attr="const_z_percent"),
-            const_i_percent=load.get_default(attr="const_i_percent"),
-            sn_mva=np.nan,
-            scaling=1.0,
-            in_service=True,
-            type=load.get_default(attr=type),
-            max_p_mw=np.nan,
-            min_p_mw=np.nan,
-            max_q_mvar=np.nan,
-            min_q_mvar=np.nan,
-            controllable=np.nan,
-        )
+        try:
+            pandapower.create_load(
+                net=self.network,
+                name=load.name,
+                index=load.uid,
+                bus=load_bus.uid,
+                p_mw=load.active_power,
+                q_mvar=load.reactive_power,
+                const_z_percent=load.get_default(attr="const_z_percent"),
+                const_i_percent=load.get_default(attr="const_i_percent"),
+                sn_mva=np.nan,
+                scaling=1.0,
+                in_service=True,
+                type=load.get_default(attr=type),
+                max_p_mw=np.nan,
+                min_p_mw=np.nan,
+                max_q_mvar=np.nan,
+                min_q_mvar=np.nan,
+                controllable=np.nan,
+            )
+        except Exception as e:
+            print(e)
         return True
 
     def create_two_winding_transformer_from_gdf(
@@ -111,7 +129,7 @@ class PandapowerModel:
         :param core_model: Core model to be converted.
         :type core_model: CoreModel
         :param transformer: Two winding transformer in the core model that
-                            will be converted and added to the converted 
+                            will be converted and added to the converted
                             pandapower model.
         :type transformer: TwoWindingTransformer
         :return: Return False if the conversion fails and True if it suceeds.
@@ -363,7 +381,7 @@ class PandapowerModel:
         transmission line. Returns True if a bus is found at both ends of the
         transmission line, if not returns False and doesn't create a line in
         the pandapower network.
-        
+
 
         :param core_model: Core model to be converted.
         :type core_model: CoreModel
@@ -389,7 +407,7 @@ class PandapowerModel:
             net=self.network,
             name=tline.name,
             index=tline.uid,
-            geodata=tline.coords,
+            geodata=PandapowerModel.transform_coords(tline.coords),
             from_bus=from_bus.uid,
             to_bus=to_bus.uid,
             length_km=tline.length,
@@ -452,7 +470,7 @@ class PandapowerModel:
 
         :param core_model: Core model to be converted.
         :type core_model: CoreModel
-        :param shunt: Shunt in the gdf that will be converted and added to the 
+        :param shunt: Shunt in the gdf that will be converted and added to the
                       converted pandapower network.
         :type shunt: Shunt
         :return: Return False if the conversion fails and True if it suceeds.
@@ -498,15 +516,27 @@ class PandapowerModel:
             case _:
                 return False
 
+    def create_external_grid_from_gdf_external_grid(
+        self, core_model: CoreModel, external_grid: ExternalGrid
+    ) -> bool:
+
+        bus = get_connected_bus(core_model.graph, external_grid, max_depth=1)
+
+        pandapower.create_ext_grid(
+            net=self.network,
+            bus=bus.uid,
+            vm_pu=external_grid.u_setp,
+        )
+
     def create_switch_from_gdf_switch(self, core_model: CoreModel, switch: Switch) -> bool:
         """Create a pandapower switch in the network from a given gdf switch.
         Returns True if both neighbors are found and if the the switch et variable
-        can be found, if not returns False and doesn't create a switch in the pandapower 
+        can be found, if not returns False and doesn't create a switch in the pandapower
         network.
 
         :param core_model: Core model to be converted.
         :type core_model: CoreModel
-        :param switch: Switch in the gdf that will be converted and added to the 
+        :param switch: Switch in the gdf that will be converted and added to the
                        pandapower network.
         :type switch: Switch
         :return: Return False if the conversion fails and True if it suceeds.
@@ -514,16 +544,19 @@ class PandapowerModel:
         """
         neighbours = core_model.get_neighbors(component=switch, follow_links=True, connector=None)
         # If there are less than two neighbours found the function fails
+        print(neighbours)
         if len(neighbours) == 2:
             if isinstance(neighbours[0], Bus):
-                switch_bus = neighbours[0].uid
-                switch_other_component = neighbours[1].uid
+                switch_bus = neighbours[0]
+                switch_other_component = neighbours[1]
             else:
-                switch_bus = neighbours[1].uid
-                switch_other_component = neighbours[0].uid
+                switch_bus = neighbours[1]
+                switch_other_component = neighbours[0]
         else:
             return False
         # Get string mapped to the type of the other component
+        print(f"switch bus {switch_bus}")
+        print(f"switch other component bus {switch_other_component}")
         switch_et = self._create_pandapower_switch_et(switch_other_component)
         # If it wasn't possible to map the component the function fails
         if not switch_et:
@@ -537,10 +570,10 @@ class PandapowerModel:
             net=self.network,
             name=switch.name,
             index=switch.uid,
-            bus=switch_bus,
-            element=switch_other_component,
+            bus=switch_bus.uid,
+            element=switch_other_component.uid,
             et=switch_et,
             closed=switch.closed,
-            in_ka=switch.rating_b * 1000 / voltage,
+            in_ka=(switch.rate_b * 1000 / voltage if switch.rate_b is not None else 13.5),
         )
         return True
