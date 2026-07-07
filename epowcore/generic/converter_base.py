@@ -1,6 +1,9 @@
-from abc import abstractmethod
 import copy
+import importlib
+from abc import abstractmethod
 from typing import Generic, TypeVar
+
+from typing_extensions import Self
 
 from epowcore.gdf.core_model import CoreModel
 from epowcore.generic.logger import Logger
@@ -13,12 +16,14 @@ Model = TypeVar("Model")
 class ConverterBase(Generic[Model]):
     """Base class for all converters with import to and export from the GDF."""
 
+    # To require overwrite, this could also be done using a abstract method which returns a constant value
+    REQUIRED_MODULES: list[str] = []
+
     def __init__(self, debug: bool = False) -> None:
         self.debug = debug
+        self.import_required_modules()
 
-    def from_gdf(
-        self, core_model: CoreModel, name: str, log_path: str | None = None
-    ) -> Model:
+    def from_gdf(self, core_model: CoreModel, name: str, log_path: str | None = None) -> Model:
         """Export a core model to the format."""
         logger = None
         if log_path is not None or self.debug:
@@ -61,6 +66,10 @@ class ConverterBase(Generic[Model]):
             logger.save_to_file(log_path)
             logger.close()
         return core_model
+
+    def import_required_modules(cls: Self) -> None:
+        for module in cls.REQUIRED_MODULES:
+            importlib.import_module(module)
 
     def _pre_export(self, core_model: CoreModel, name: str) -> CoreModel:
         """Called before the export of a core model."""

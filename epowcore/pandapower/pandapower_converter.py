@@ -1,14 +1,14 @@
-import pandapower
-
+from epowcore.gdf.core_model import CoreModel
 from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import Platform
-from epowcore.gdf.core_model import CoreModel
 from epowcore.generic.converter_base import ConverterBase
 from epowcore.pandapower.from_gdf.pandapower_export import export_pandapower
 from epowcore.pandapower.pandapower_model import PandapowerModel
 
 
 class PandapowerConverter(ConverterBase[PandapowerModel]):
+    REQUIRED_MODULES = ["pandapower"]
+
     def from_gdf(
         self, core_model: CoreModel, name: str, log_path: str | None = None
     ) -> PandapowerModel:

@@ -1,12 +1,12 @@
-import pandapower
+from pandapower import create_empty_network
 
 from epowcore.gdf.bus import Bus
 from epowcore.gdf.core_model import CoreModel
 from epowcore.gdf.external_grid import ExternalGrid
-from epowcore.gdf.switch import Switch
-from epowcore.gdf.generators.synchronous_machine import SynchronousMachine
 from epowcore.gdf.generators.static_generator import StaticGenerator
+from epowcore.gdf.generators.synchronous_machine import SynchronousMachine
 from epowcore.gdf.load import Load
+from epowcore.gdf.switch import Switch
 from epowcore.gdf.tline import TLine
 from epowcore.gdf.transformers.two_winding_transformer import TwoWindingTransformer
 from epowcore.generic.logger import Logger
@@ -15,7 +15,7 @@ from epowcore.pandapower.pandapower_model import PandapowerModel
 
 
 def export_pandapower(core_model: CoreModel) -> PandapowerModel:
-    """Pandapower export function, taking in the gdf CoreModel and 
+    """Pandapower export function, taking in the gdf CoreModel and
     returning a PandapowerModel object.
 
     :param core_model: GDF core model to be converted to a PandapowerModel.
@@ -31,7 +31,7 @@ def export_pandapower(core_model: CoreModel) -> PandapowerModel:
     # Create PandapowerModel that stores pandapower.Net to create elements inside of
     Logger.log_to_selected("Creating Pandapower network")
     pandapower_network = PandapowerModel(
-        network=pandapower.create_empty_network(
+        network=create_empty_network(
             f_hz=core_model.base_frequency, sn_mva=core_model.base_mva_fb(), add_stdtypes=False
         )
     )
@@ -105,7 +105,9 @@ def export_pandapower(core_model: CoreModel) -> PandapowerModel:
     gdf_switch_list = core_model.type_list(Switch)
     number_of_switches = len(gdf_switch_list)
     for gdf_switch in gdf_switch_list:
-        if pandapower_network.create_switch_from_gdf_switch(core_model=core_model, switch=gdf_switch):
+        if pandapower_network.create_switch_from_gdf_switch(
+            core_model=core_model, switch=gdf_switch
+        ):
             counter += 1
     Logger.log_to_selected(f"Created {counter} out of {number_of_switches}")
 
