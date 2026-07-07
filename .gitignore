@@ -31,3 +31,6 @@ virtualenv/
 *.slxc
 /*.slx
 /*.slx.autosave
+
+.manualVenv
+.manualVenv2
