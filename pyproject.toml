@@ -2,25 +2,25 @@
 name = "epowcore"
 version = "0.1.0"
 description = "A converter between different power system model formats and a generic data format."
-requires-python = "==3.10.0"
+requires-python = "==3.10.8"
 authors = [
     {name = "KIT-IAI-ESA"},
 ]
 license = {text = ""}
 dependencies = [
-    "dataclasses",
-    "geojson",
-    "networkx",
-    "matplotlib",
-    "scipy",
-    "pyyaml",
-    "pandapower==3.5.3"
+    "dataclasses==0.6",
+    "geojson==3.1.0",
+    "networkx==3.4.2",
+    "matplotlib==3.8.4",
+    "scipy==1.13.1",
+    "pyyaml==6.0.2",
+    "pandapower==2.14.11",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest",
-    "pytest-cov",
+    "pytest==8.3.3",
+    "pytest-cov==6.1.1",
     "black",
     "mypy",
     "sphinx",
