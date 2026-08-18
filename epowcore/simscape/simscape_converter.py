@@ -1,16 +1,17 @@
 import matlab.engine
 
 from epowcore.gdf.core_model import CoreModel
+from epowcore.generic.constants import Platform
 from epowcore.generic.converter_base import ConverterBase
-from epowcore.generic.manipulation.group_subsystem_rules import (
-    apply_group_subsystem_rules,
-)
+from epowcore.generic.manipulation.group_subsystem_rules import apply_group_subsystem_rules
 from epowcore.simscape.export import export
 from epowcore.simscape.simscape_graph_transformer import rename_duplicate_nodes
 
 
 class SimscapeConverter(ConverterBase[str]):
     """Converter for Matlab/Simscape models."""
+
+    platform = Platform.SIMSCAPE
 
     def __init__(self, eng: matlab.engine.MatlabEngine | None = None, debug: bool = False) -> None:
         """

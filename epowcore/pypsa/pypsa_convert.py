@@ -14,6 +14,8 @@ from epowcore.pypsa.from_gdf.pypsa_exporter import PyPSAExporter
 
 
 class PyPSAConverter(ConverterBase[pypsa_network]):
+    platform = Platform.PYPSA
+
     def from_gdf(
         self, core_model: CoreModel, name: str, log_path: str | None = None
     ) -> pypsa_network:

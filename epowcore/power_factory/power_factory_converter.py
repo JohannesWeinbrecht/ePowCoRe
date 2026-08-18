@@ -1,14 +1,17 @@
 import powerfactory as pf
 
-from epowcore.power_factory.to_gdf.power_factory_extractor import PowerFactoryExtractor
-from epowcore.power_factory.from_gdf.power_factory_exporter import PowerFactoryExporter
 from epowcore.gdf.core_model import CoreModel
-from epowcore.generic.manipulation.flatten import flatten
+from epowcore.generic.constants import Platform
 from epowcore.generic.converter_base import ConverterBase
+from epowcore.generic.manipulation.flatten import flatten
+from epowcore.power_factory.from_gdf.power_factory_exporter import PowerFactoryExporter
 from epowcore.power_factory.power_factory_model import PFModel
+from epowcore.power_factory.to_gdf.power_factory_extractor import PowerFactoryExtractor
 
 
 class PowerFactoryConverter(ConverterBase[PFModel]):
+    platform = Platform.POWERFACTORY
+
     def __init__(self, debug: bool = False) -> None:
         self.app = pf.GetApplication()
         super().__init__(debug)

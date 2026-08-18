@@ -1,12 +1,17 @@
 from copy import deepcopy
+
 from pyapi_rts.api.draft import Draft
+
 from epowcore.gdf.core_model import CoreModel
+from epowcore.generic.constants import Platform
 from epowcore.generic.converter_base import ConverterBase
 from epowcore.generic.manipulation.flatten import flatten
 from epowcore.rscad.rscad_export import RscadExporter, RscadModel
 
 
 class RscadConverter(ConverterBase[RscadModel]):
+    platform = Platform.RSCAD
+
     def to_gdf(self, model: Draft, log_path: str | None = None) -> CoreModel:
         raise NotImplementedError()
 

@@ -5,17 +5,15 @@ from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import Platform
 from epowcore.generic.converter_base import ConverterBase
 from epowcore.generic.logger import Logger
-from epowcore.pandapower.from_gdf.pandapower_export import (
-    export_pandapower,
-)
+from epowcore.pandapower.from_gdf.pandapower_export import export_pandapower
 from epowcore.pandapower.pandapower_model import PandapowerModel
-from epowcore.plausibility.pandapower_checker import (
-    PandapowerPlausibilityChecker,
-)
+from epowcore.plausibility.pandapower_checker import PandapowerPlausibilityChecker
 from epowcore.plausibility.plausibility_result import PlausibilityResult
 
 
 class PandapowerConverter(ConverterBase[PandapowerModel]):
+    platform = Platform.PANDAPOWER
+
     def __init__(
         self,
         debug: bool = False,
@@ -63,9 +61,7 @@ class PandapowerConverter(ConverterBase[PandapowerModel]):
             name=name,
         )
 
-        Logger.log_to_selected(
-            self.plausibility_result.summary()
-        )
+        Logger.log_to_selected(self.plausibility_result.summary())
 
         return model
 

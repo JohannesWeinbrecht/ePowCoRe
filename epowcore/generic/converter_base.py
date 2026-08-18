@@ -1,8 +1,9 @@
-from abc import abstractmethod
 import copy
-from typing import Generic, TypeVar
+from abc import abstractmethod
+from typing import ClassVar, Generic, TypeVar
 
 from epowcore.gdf.core_model import CoreModel
+from epowcore.generic.constants import Platform
 from epowcore.generic.logger import Logger
 from epowcore.generic.tools.visualization import visualize_graph
 
@@ -13,12 +14,12 @@ Model = TypeVar("Model")
 class ConverterBase(Generic[Model]):
     """Base class for all converters with import to and export from the GDF."""
 
+    platform = ClassVar[Platform]
+
     def __init__(self, debug: bool = False) -> None:
         self.debug = debug
 
-    def from_gdf(
-        self, core_model: CoreModel, name: str, log_path: str | None = None
-    ) -> Model:
+    def from_gdf(self, core_model: CoreModel, name: str, log_path: str | None = None) -> Model:
         """Export a core model to the format."""
         logger = None
         if log_path is not None or self.debug:
