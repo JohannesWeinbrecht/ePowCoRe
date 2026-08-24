@@ -1,7 +1,6 @@
 import pandapower
 
 from epowcore.gdf.core_model import CoreModel
-from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import Platform
 from epowcore.generic.converter_base import ConverterBase
 from epowcore.generic.logger import Logger
@@ -24,19 +23,6 @@ class PandapowerConverter(ConverterBase[PandapowerModel]):
         self.run_plausibility_check = run_plausibility_check
         self.plausibility_output_path = plausibility_output_path
         self.plausibility_result: PlausibilityResult | None = None
-
-    def from_gdf(
-        self,
-        core_model: CoreModel,
-        name: str,
-        log_path: str | None = None,
-    ) -> PandapowerModel:
-        Configuration().default_platform = Platform.PANDAPOWER
-        return super().from_gdf(
-            core_model,
-            name,
-            log_path,
-        )
 
     def _export(
         self,

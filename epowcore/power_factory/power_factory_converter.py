@@ -16,17 +16,6 @@ class PowerFactoryConverter(ConverterBase[PFModel]):
         self.app = pf.GetApplication()
         super().__init__(debug)
 
-    def from_gdf(self, core_model: CoreModel, name: str, log_path: str | None = None) -> PFModel:
-        return super().from_gdf(core_model, name, log_path)
-
-    def to_gdf(self, model: PFModel, log_path: str | None = None) -> CoreModel:
-        """Convert a PowerFactory model to a GDF core model.
-
-        :param model: A tuple containing the project name and the study case name.
-        :param log_path: The path to the log file. If None, no log file will be created.
-        """
-        return super().to_gdf(model, log_path)
-
     def _pre_export(self, core_model, name):
         flatten(core_model)
         return core_model

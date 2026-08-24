@@ -1,7 +1,6 @@
 import json
 
 from epowcore.gdf.core_model import CoreModel
-from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import Platform
 from epowcore.generic.converter_base import ConverterBase
 from epowcore.jmdl.from_gdf.jmdl_export import export_jmdl
@@ -20,13 +19,6 @@ class JmdlConverter(ConverterBase[JmdlModel]):
         """Converts the content of a JMDL file to a GDF core model."""
         jmdl = JmdlModel.from_dict(json.loads(json_data))
         return self.to_gdf(jmdl)
-
-    def from_gdf(self, core_model: CoreModel, name: str, log_path: str | None = None) -> JmdlModel:
-        Configuration().default_platform = Platform.JMDL
-        return super().from_gdf(core_model, name, log_path)
-
-    def to_gdf(self, model: JmdlModel, log_path: str | None = None) -> CoreModel:
-        return super().to_gdf(model, log_path)
 
     def _pre_export(self, core_model: CoreModel, name: str) -> CoreModel:
         return transform(core_model)

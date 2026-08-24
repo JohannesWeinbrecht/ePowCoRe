@@ -3,6 +3,7 @@ from abc import abstractmethod
 from typing import ClassVar, Generic, TypeVar
 
 from epowcore.gdf.core_model import CoreModel
+from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import Platform
 from epowcore.generic.logger import Logger
 from epowcore.generic.tools.visualization import visualize_graph
@@ -18,6 +19,7 @@ class ConverterBase(Generic[Model]):
 
     def __init__(self, debug: bool = False) -> None:
         self.debug = debug
+        Configuration().default_platform = self.platform
 
     def from_gdf(self, core_model: CoreModel, name: str, log_path: str | None = None) -> Model:
         """Export a core model to the format."""

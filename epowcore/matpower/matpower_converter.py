@@ -1,7 +1,6 @@
 from scipy.io import savemat
 
 from epowcore.gdf.core_model import CoreModel
-from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import Platform
 from epowcore.generic.converter_base import ConverterBase
 from epowcore.matpower.from_gdf.matpower_export import export_matpower
@@ -11,12 +10,6 @@ from epowcore.matpower.matpower_model import MatpowerModel
 
 class MatpowerConverter(ConverterBase[MatpowerModel]):
     platform = Platform.MATPOWER
-
-    def from_gdf(
-        self, core_model: CoreModel, name: str, log_path: str | None = None
-    ) -> MatpowerModel:
-        Configuration().default_platform = Platform.MATPOWER
-        return super().from_gdf(core_model, name, log_path)
 
     def write_to_matfile(self, model: MatpowerModel, file_path: str) -> None:
         savemat(file_path, model.as_dict())
