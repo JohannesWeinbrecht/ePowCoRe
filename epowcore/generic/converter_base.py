@@ -2,6 +2,8 @@ import copy
 from abc import abstractmethod
 from typing import ClassVar, Generic, TypeVar
 
+from epowdare.conversion.generic.base_converter_mixin import ConverterBaseMixin
+
 from epowcore.gdf.core_model import CoreModel
 from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import Platform
@@ -11,8 +13,14 @@ from epowcore.generic.tools.visualization import visualize_graph
 Model = TypeVar("Model")
 """The type of the model in the format being converted to or from or an identifier for it."""
 
+bases = (
+    (ConverterBaseMixin, Generic[Model])
+    if Configuration().get_default("General", "integrate_epowdare")
+    else (Generic[Model],)
+)
 
-class ConverterBase(Generic[Model]):
+
+class ConverterBase(*bases):
     """Base class for all converters with import to and export from the GDF."""
 
     platform = ClassVar[Platform]
