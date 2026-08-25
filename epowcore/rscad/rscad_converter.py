@@ -12,7 +12,7 @@ from epowcore.rscad.rscad_export import RscadExporter, RscadModel
 class RscadConverter(ConverterBase[RscadModel]):
     platform = Platform.RSCAD
 
-    def to_gdf(self, model: Draft, log_path: str | None = None) -> CoreModel:
+    def to_gdf(self, model: Draft, log_path: str | None = None, **kwargs) -> CoreModel:
         raise NotImplementedError()
 
     def _pre_export(self, core_model: CoreModel, name: str) -> CoreModel:

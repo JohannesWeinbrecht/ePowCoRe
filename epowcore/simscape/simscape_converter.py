@@ -36,6 +36,7 @@ class SimscapeConverter(ConverterBase[str]):
         *,
         apply_rules: bool = True,
         is_subsystem: bool = False,
+        **kwargs,
     ) -> str:
         self._apply_rules = apply_rules
         self._is_subsystem = is_subsystem

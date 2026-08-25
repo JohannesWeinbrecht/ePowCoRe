@@ -14,7 +14,7 @@ class MatpowerConverter(ConverterBase[MatpowerModel]):
     def write_to_matfile(self, model: MatpowerModel, file_path: str) -> None:
         savemat(file_path, model.as_dict())
 
-    def to_gdf(self, model: MatpowerModel, log_path: str | None = None) -> CoreModel:
+    def to_gdf(self, model: MatpowerModel, log_path: str | None = None, **kwargs) -> CoreModel:
         raise NotImplementedError()
 
     def _pre_export(self, core_model: CoreModel, name: str) -> CoreModel:

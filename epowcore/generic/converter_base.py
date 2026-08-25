@@ -29,7 +29,9 @@ class ConverterBase(*bases):
         self.debug = debug
         Configuration().default_platform = self.platform
 
-    def from_gdf(self, core_model: CoreModel, name: str, log_path: str | None = None) -> Model:
+    def from_gdf(
+        self, core_model: CoreModel, name: str, log_path: str | None = None, **kwargs
+    ) -> Model:
         """Export a core model to the format."""
         logger = None
         if log_path is not None or self.debug:
@@ -52,7 +54,7 @@ class ConverterBase(*bases):
             logger.close()
         return model
 
-    def to_gdf(self, model: Model, log_path: str | None = None) -> CoreModel:
+    def to_gdf(self, model: Model, log_path: str | None = None, **kwargs) -> CoreModel:
         """Import a core model from the format."""
         logger = None
         if log_path is not None:

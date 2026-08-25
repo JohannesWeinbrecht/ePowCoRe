@@ -45,7 +45,7 @@ class PyPSAConverter(ConverterBase[pypsa_network]):
     def _export(self, core_model: CoreModel, name: str) -> pypsa_network:
         return PyPSAExporter.export_pypsa(core_model=core_model, name=name)
 
-    def to_gdf(self, model: pypsa_network, log_path: str | None = None) -> CoreModel:
+    def to_gdf(self, model: pypsa_network, log_path: str | None = None, **kwargs) -> CoreModel:
         raise NotImplementedError
 
     def _import(self, model: pypsa_network) -> CoreModel:
