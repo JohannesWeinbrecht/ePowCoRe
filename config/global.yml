@@ -1,3 +1,5 @@
+General:
+  integrate_epowdare: True
 CoreModel:
   base_mva: 100.0
 ExternalGrid:
