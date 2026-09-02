@@ -16,6 +16,8 @@ from epowcore.generic.configuration import Configuration
 from epowcore.generic.logger import Logger
 from epowcore.power_factory.utils import get_coords
 
+from epowdare.conversion.generic.mapping_creator import MappingCreator
+
 
 class PowerFactoryExtractor:
     """This class extracts the values from PowerFactory to GenericCoreModel."""
@@ -133,12 +135,14 @@ class PowerFactoryExtractor:
             self.uid += 1
             # Add the mapping to dictionary and PowerFactory element to the graph
             self._component_dict[pf_load] = load
+            MappingCreator.add_mapping({pf_load.GetFullName()}, {load})
             self.graph.add_node(pf_load)
         for pf_load in pf_loads_lv:
             load = Components.create_load_lv(pf_load, self.uid)
             self.uid += 1
             # Add the mapping to dictionary and PowerFactory element to the graph
             self._component_dict[pf_load] = load
+            MappingCreator.add_mapping({pf_load.GetFullName()}, {load})
             self.graph.add_node(pf_load)
 
     def extract_two_winding_transformers(self) -> None:
