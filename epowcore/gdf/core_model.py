@@ -1,9 +1,11 @@
-from ast import literal_eval as make_tuple
-from dataclasses import dataclass, field, asdict
 import importlib
+from ast import literal_eval as make_tuple
+from dataclasses import asdict, dataclass, field
 from typing import TypeVar
 
 import networkx as nx
+import numpy as np
+
 from epowcore.generic.component_graph import ComponentGraph
 from epowcore.generic.configuration import Configuration
 from epowcore.generic.constants import GDF_VERSION, Platform
@@ -269,8 +271,8 @@ class CoreModel:
         :return: A list of components connected to to given [component].
         :rtype: list[Component]
         """
-        from epowcore.gdf.subsystem import Subsystem
         from epowcore.gdf.port import Port
+        from epowcore.gdf.subsystem import Subsystem
 
         _, graph = self.get_component_by_id(component.uid)
         if graph is None:
@@ -408,6 +410,148 @@ class CoreModel:
         import_data["graph"] = ComponentGraph(nx.relabel_nodes(import_graph, label_dict))
         del import_data["components"]
         return cls(**import_data)
+
+    def plot_geographic(
+        self, show: bool = True, export_path: str | None = None
+    ) -> "matplotlib.figure.Figure | None":
+        """Create a geographic plot of the core model showing component locations and connections.
+
+        :param show: Whether to display the plot interactively, defaults to True
+        :type show: bool, optional
+        :param export_path: Path to save the image file (e.g., "model.png"), defaults to None
+        :type export_path: str | None, optional
+        :return: The matplotlib Figure object if successful, None if no components have coordinates
+        :rtype: matplotlib.figure.Figure | None
+        """
+        import matplotlib.pyplot as plt
+        from matplotlib.collections import LineCollection
+
+        # Get all components from the graph
+        components = list(self.graph.nodes)
+
+        if not components:
+            Logger.log_to_selected("Warning: No components in model to plot.")
+            return None
+
+        # Collect components with valid coordinates
+        components_with_coords: list[Component] = []
+        coords_list: list[tuple[float, float]] = []
+
+        for comp in components:
+            coords = comp.coords
+            if coords is None:
+                continue
+
+            # Handle both single coordinate pair and list of coordinate pairs
+            if isinstance(coords, tuple) and len(coords) == 2:
+                components_with_coords.append(comp)
+                coords_list.append(coords)
+            elif isinstance(coords, list) and len(coords) > 0:
+                components_with_coords.append(comp)
+                coords_list.append(coords[0])
+
+        if not components_with_coords:
+            Logger.log_to_selected("Warning: No components with valid coordinates found in model.")
+            return None
+
+        # Extract longitude (x) and latitude (y) - coords are (lat, lon)
+        lats = [coord[0] for coord in coords_list]
+        lons = [coord[1] for coord in coords_list]
+
+        # Create figure and axis
+        fig, ax = plt.subplots(figsize=(10, 8))
+
+        # Define color map for different component types
+        component_types = sorted(set(type(comp).__name__ for comp in components_with_coords))
+        type_colors = plt.cm.tab10(np.linspace(0, 1, len(component_types)))
+        type_color_map = {type_name: type_colors[i] for i, type_name in enumerate(component_types)}
+
+        # Define markers for different component types
+        marker_cycle = ["o", "s", "^", "D", "v", "<", ">", "p", "h", "*"]
+        type_marker_map = {
+            type_name: marker_cycle[i % len(marker_cycle)]
+            for i, type_name in enumerate(component_types)
+        }
+
+        # Plot each component with its type-specific color and marker
+        for comp, lat, lon in zip(components_with_coords, lats, lons):
+            type_name = type(comp).__name__
+            color = type_color_map[type_name]
+            marker = type_marker_map[type_name]
+
+            ax.scatter(
+                lon,
+                lat,
+                c=[color],
+                marker=marker,
+                s=100,
+                label=type_name,
+                edgecolors="black",
+                linewidths=0.5,
+                zorder=3,
+            )
+
+            # Add component name as annotation
+            ax.annotate(
+                comp.name,
+                (lon, lat),
+                xytext=(5, 5),
+                textcoords="offset points",
+                fontsize=8,
+                alpha=0.7,
+            )
+
+        # Draw connections (edges) between components
+        line_segments = []
+        for u, v in self.graph.edges:
+            u_coords = None
+            v_coords = None
+
+            if u.coords is not None:
+                if isinstance(u.coords, tuple) and len(u.coords) == 2:
+                    u_coords = (u.coords[1], u.coords[0])
+                elif isinstance(u.coords, list) and len(u.coords) > 0:
+                    u_coords = (u.coords[0][1], u.coords[0][0])
+
+            if v.coords is not None:
+                if isinstance(v.coords, tuple) and len(v.coords) == 2:
+                    v_coords = (v.coords[1], v.coords[0])
+                elif isinstance(v.coords, list) and len(v.coords) > 0:
+                    v_coords = (v.coords[0][1], v.coords[0][0])
+
+            if u_coords is not None and v_coords is not None:
+                line_segments.append([u_coords, v_coords])
+
+        if line_segments:
+            lc = LineCollection(line_segments, colors="gray", linewidths=1, alpha=0.5, zorder=1)
+            ax.add_collection(lc)
+
+        # Remove duplicate labels for legend
+        handles, labels = ax.get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        if by_label:
+            ax.legend(by_label.values(), by_label.keys(), loc="best", framealpha=0.9, fontsize=9)
+
+        # Set labels and title
+        ax.set_xlabel("Longitude")
+        ax.set_ylabel("Latitude")
+        ax.set_title("Geographic Model Visualization")
+        ax.grid(True, alpha=0.3)
+        ax.set_aspect("equal", adjustable="datalim")
+        plt.tight_layout()
+
+        # Export if path provided
+        if export_path is not None:
+            fig.savefig(export_path, dpi=150, bbox_inches="tight")
+            Logger.log_to_selected(f"Geographic plot saved to: {export_path}")
+
+        # Show if requested
+        if show:
+            plt.show()
+        else:
+            return fig
+
+        return None
 
 
 def _get_class(full_class_name: str) -> type[Component]:
