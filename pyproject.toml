@@ -38,6 +38,15 @@ dev = [
 pypsa = [
     "pypsa",
 ]
+geopandas = [
+    "geopandas",
+    "folium",
+]
+visualization = [
+    "plotly",
+    "kaleido",
+    "selenium",
+]
 simscape = [
     "matlabengine==9.13.9",
 ]
