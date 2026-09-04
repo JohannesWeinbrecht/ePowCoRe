@@ -3,13 +3,20 @@
 from typing import Callable, TypeVar
 
 import pypsa
+from epowdare.conversion.generic.mapping_creator import MappingCreator
+from epowdare.conversion.pypsa_conv.pypsa_mapping import PyPSAComponent
 from pypsa import Network
 
 from epowcore.gdf.bus import Bus
 from epowcore.gdf.component import Component
 from epowcore.gdf.core_model import CoreModel
 from epowcore.gdf.external_grid import ExternalGrid
-from epowcore.gdf.generators import EPowGenerator, Generator, StaticGenerator, SynchronousMachine
+from epowcore.gdf.generators import (
+    EPowGenerator,
+    Generator,
+    StaticGenerator,
+    SynchronousMachine,
+)
 from epowcore.gdf.load import Load
 from epowcore.gdf.pv_system import PVSystem
 from epowcore.gdf.shunt import Shunt
@@ -69,7 +76,9 @@ class PyPSAExporter:
             Logger.log_to_selected(
                 "The 'Solar' carrier has been added becuase a PVSystem is in the grid"
             )
-        generator_carriers = {gen.category.value for gen in self.core_model.type_list(Generator)}
+        generator_carriers = {
+            gen.category.value for gen in self.core_model.type_list(Generator)
+        }
         for carrier in generator_carriers:
             if not carrier in self.pypsa_model.components.carriers.static.index:
                 self.pypsa_model.components.carriers.add(carrier)
@@ -169,8 +178,12 @@ class PyPSAExporter:
         :rtype: bool
         """
 
-        bus0_list = self.core_model.get_neighbors(component=line, follow_links=True, connector="A")
-        bus1_list = self.core_model.get_neighbors(component=line, follow_links=True, connector="B")
+        bus0_list = self.core_model.get_neighbors(
+            component=line, follow_links=True, connector="A"
+        )
+        bus1_list = self.core_model.get_neighbors(
+            component=line, follow_links=True, connector="B"
+        )
 
         if not bus0_list or not bus1_list:
             Logger.log_to_selected(
@@ -222,6 +235,11 @@ class PyPSAExporter:
         # represents a normal load which consumes power
         sign = -1 if load.active_power >= 0 else 1
 
+        MappingCreator.add_mapping(
+            {load},
+            set(("Load", str(load.uid))),
+        )
+
         load_name = self.pypsa_model.components.loads.add(
             name=load.uid,
             bus=load_bus.uid,
@@ -238,7 +256,11 @@ class PyPSAExporter:
 
     def add_generator_from_gdf(
         self,
-        generator: EPowGenerator | SynchronousMachine | StaticGenerator | PVSystem | ExternalGrid,
+        generator: EPowGenerator
+        | SynchronousMachine
+        | StaticGenerator
+        | PVSystem
+        | ExternalGrid,
     ) -> bool:
         """Method for converting any type of GDF generator to a PyPSA generator.
         For this, the method retrieved the connected bus and calls sub methods,
@@ -278,7 +300,9 @@ class PyPSAExporter:
                     generator=generator, bus=generator_bus
                 )
             case PVSystem():
-                return self.add_generator_from_gdf_pvsystem(pvsystem=generator, bus=generator_bus)
+                return self.add_generator_from_gdf_pvsystem(
+                    pvsystem=generator, bus=generator_bus
+                )
             case ExternalGrid():
                 return self.add_generator_from_gdf_external_grid(
                     external_grid=generator, bus=generator_bus
@@ -289,7 +313,9 @@ class PyPSAExporter:
                 )
                 return False
 
-    def add_generator_from_gdf_epowgenerator(self, generator: EPowGenerator, bus: Bus) -> bool:
+    def add_generator_from_gdf_epowgenerator(
+        self, generator: EPowGenerator, bus: Bus
+    ) -> bool:
         """Method responsible for converting a GDF EPowGenerator.
         This method takes the connected bus and the EPowGenerator instance and creates
         a equal PyPSA generator which is connected to the PyPSA bus representing the
@@ -305,20 +331,30 @@ class PyPSAExporter:
         generator_name = self.pypsa_model.components.generators.add(
             name=generator.uid,
             bus=bus.uid,
-            control=(bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"),
+            control=(
+                bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"
+            ),
             type="",
             p_nom=generator.maximumRealPowerOutput,
-            p_min_pu=(generator.minimumRealPowerOutput / generator.maximumRealPowerOutput),
-            p_max_pu=(generator.maximumRealPowerOutput / generator.maximumRealPowerOutput),
+            p_min_pu=(
+                generator.minimumRealPowerOutput / generator.maximumRealPowerOutput
+            ),
+            p_max_pu=(
+                generator.maximumRealPowerOutput / generator.maximumRealPowerOutput
+            ),
             p_set=generator.realPowerOutput,
             p_init=generator.realPowerOutput,
             q_set=generator.reactivePowerOutput,
             sign=(1 if generator.baseMVA >= 0 else -1),
             carrier=generator.category.value,
         )
-        creation_result = generator_name[0] in self.pypsa_model.components.generators.static.index
+        creation_result = (
+            generator_name[0] in self.pypsa_model.components.generators.static.index
+        )
         if not creation_result:
-            Logger.log_to_selected(f"Creation in PyPSA failed for EPowGenerator {generator.uid}")
+            Logger.log_to_selected(
+                f"Creation in PyPSA failed for EPowGenerator {generator.uid}"
+            )
         return creation_result
 
     def add_generator_from_gdf_synchronousmachine(
@@ -340,7 +376,9 @@ class PyPSAExporter:
         generator_name = self.pypsa_model.components.generators.add(
             name=generator.uid,
             bus=bus.uid,
-            control=(bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"),
+            control=(
+                bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"
+            ),
             type="",
             p_nom=generator.rated_active_power,
             p_min_pu=(
@@ -359,14 +397,18 @@ class PyPSAExporter:
             sign=(1 if generator.rated_active_power >= 0 else -1),
             carrier=generator.category.value,
         )
-        creation_result = generator_name[0] in self.pypsa_model.components.generators.static.index
+        creation_result = (
+            generator_name[0] in self.pypsa_model.components.generators.static.index
+        )
         if not creation_result:
             Logger.log_to_selected(
                 f"Creation in PyPSA failed for SynchronousMachine {generator.uid}"
             )
         return creation_result
 
-    def add_generator_from_gdf_staticgenerator(self, generator: StaticGenerator, bus: Bus) -> bool:
+    def add_generator_from_gdf_staticgenerator(
+        self, generator: StaticGenerator, bus: Bus
+    ) -> bool:
         """Method responsible for converting a GDF StaticGenerator.
         This method takes the connected bus and the StaticGenerator instance and creates
         a equal PyPSA generator which is connected to the PyPSA bus representing the
@@ -382,7 +424,9 @@ class PyPSAExporter:
         generator_name = self.pypsa_model.components.generators.add(
             name=generator.uid,
             bus=bus.uid,
-            control=(bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"),
+            control=(
+                bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"
+            ),
             type="",
             p_nom=generator.rated_active_power,
             p_min_pu=(generator.p_min / generator.rated_active_power),
@@ -393,9 +437,13 @@ class PyPSAExporter:
             sign=(1 if generator.rated_active_power >= 0 else -1),
             carrier=generator.category.value,
         )
-        creation_result = generator_name[0] in self.pypsa_model.components.generators.static.index
+        creation_result = (
+            generator_name[0] in self.pypsa_model.components.generators.static.index
+        )
         if not creation_result:
-            Logger.log_to_selected(f"Creation in PyPSA failed for StaticGenerator {generator.uid}")
+            Logger.log_to_selected(
+                f"Creation in PyPSA failed for StaticGenerator {generator.uid}"
+            )
         return creation_result
 
     def add_generator_from_gdf_pvsystem(self, pvsystem: PVSystem, bus: Bus) -> bool:
@@ -425,7 +473,9 @@ class PyPSAExporter:
             name=pvsystem.uid,
             bus=bus.uid,
             p_nom=nominal_power,
-            control=(bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"),
+            control=(
+                bus.lf_bus_type.value if bus.lf_bus_type.value != "SLACK" else "Slack"
+            ),
             p_nom_extendable=False,
             p_min_pu=pvsystem.minimum_real_power_output / nominal_power,
             p_max_pu=pvsystem.maximum_real_power_output / nominal_power,
@@ -435,12 +485,18 @@ class PyPSAExporter:
             sign=1,
         )
 
-        creation_result = pvsystem_name[0] in self.pypsa_model.components.generators.static.index
+        creation_result = (
+            pvsystem_name[0] in self.pypsa_model.components.generators.static.index
+        )
         if not creation_result:
-            Logger.log_to_selected(f"Creation in PyPSA failed for PVSystem {pvsystem.uid}")
+            Logger.log_to_selected(
+                f"Creation in PyPSA failed for PVSystem {pvsystem.uid}"
+            )
         return creation_result
 
-    def add_generator_from_gdf_external_grid(self, external_grid: ExternalGrid, bus: Bus) -> bool:
+    def add_generator_from_gdf_external_grid(
+        self, external_grid: ExternalGrid, bus: Bus
+    ) -> bool:
         """Method responsible for converting a GDF ExternalGrid.
         This method takes the connected bus and the ExternalGrid instance and creates
         a equal PyPSA generator which is connected to the PyPSA bus representing the
@@ -461,14 +517,20 @@ class PyPSAExporter:
             name=external_grid.uid,
             bus=bus.uid,
             control=(
-                external_grid.bus_type.value if external_grid.bus_type.value != "SL" else "Slack"
+                external_grid.bus_type.value
+                if external_grid.bus_type.value != "SL"
+                else "Slack"
             ),
             p_nom_extendable=False,
             p_min_pu=(
-                (external_grid.p_min / external_grid.p) if not external_grid.p_min is None else None
+                (external_grid.p_min / external_grid.p)
+                if not external_grid.p_min is None
+                else None
             ),
             p_max_pu=(
-                (external_grid.p_max / external_grid.p) if not external_grid.p_max is None else None
+                (external_grid.p_max / external_grid.p)
+                if not external_grid.p_max is None
+                else None
             ),
             p_set=external_grid.p,
             q_set=external_grid.q,
@@ -478,7 +540,9 @@ class PyPSAExporter:
             external_grid_name[0] in self.pypsa_model.components.generators.static.index
         )
         if not creation_result:
-            Logger.log_to_selected(f"Creation in PyPSA failed for ExternalGrid {external_grid.uid}")
+            Logger.log_to_selected(
+                f"Creation in PyPSA failed for ExternalGrid {external_grid.uid}"
+            )
         return creation_result
 
     def add_transformer_from_gdf(self, trafo: TwoWindingTransformer) -> bool:
@@ -534,7 +598,9 @@ class PyPSAExporter:
             v_ang_min=trafo.angle_min,
             v_ang_max=trafo.angle_max,
         )
-        creation_result = trafo_name[0] in self.pypsa_model.components.transformers.static.index
+        creation_result = (
+            trafo_name[0] in self.pypsa_model.components.transformers.static.index
+        )
         if not creation_result:
             Logger.log_to_selected(
                 f"Creation in PyPSA failed for TwoWindingTransformer {trafo.uid}"
@@ -564,7 +630,9 @@ class PyPSAExporter:
             b=shunt.q / (shunt_bus.nominal_voltage**2),
         )
 
-        creation_result = shunt_name[0] in self.pypsa_model.components.shunt_impedances.static.index
+        creation_result = (
+            shunt_name[0] in self.pypsa_model.components.shunt_impedances.static.index
+        )
         if not creation_result:
             Logger.log_to_selected(f"Creation in PyPSA failed for Shunt {shunt.uid}")
         return creation_result
@@ -580,7 +648,9 @@ class PyPSAExporter:
         :return: True if successful else False
         :rtype: bool
         """
-        voltage_source_bus = get_connected_bus(self.core_model.graph, voltage_source, max_depth=1)
+        voltage_source_bus = get_connected_bus(
+            self.core_model.graph, voltage_source, max_depth=1
+        )
 
         z_base = get_z_base(voltage_source, self.core_model)
 
